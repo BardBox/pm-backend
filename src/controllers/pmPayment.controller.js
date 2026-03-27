@@ -10,12 +10,16 @@ import ApiResponses from "../utils/ApiResponses.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { sendEmailWithCredentials } from "../services/credentialsEmail.js";
 
-console.log("PM Razorpay Key:", process.env.RAZORPAY_KEY_ID?.substring(0, 12) + "...");
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
+let razorpay;
+const getRazorpay = () => {
+  if (!razorpay) {
+    razorpay = new Razorpay({
+      key_id: process.env.RAZORPAY_KEY_ID,
+      key_secret: process.env.RAZORPAY_KEY_SECRET,
+    });
+  }
+  return razorpay;
+};
 
 // Fallback amount if no plan found (₹1 for testing)
 const FALLBACK_AMOUNT = 1;
@@ -87,7 +91,7 @@ const createPmOrder = asyncHandler(async (req, res) => {
     },
   };
 
-  const order = await razorpay.orders.create(options);
+  const order = await getRazorpay().orders.create(options);
 
   return res.status(200).json(
     new ApiResponses(200, {
@@ -204,7 +208,7 @@ const verifyPmPayment = asyncHandler(async (req, res) => {
   });
 
   // Get actual amount from Razorpay order
-  const rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
+  const rzpOrder = await getRazorpay().orders.fetch(razorpay_order_id);
 
   // Create payment record and link to user
   const payment = await Payment.create({

@@ -39,26 +39,26 @@ app.use(cookieParser());
 app.use(express.static("public"));
 
 // Health check
-app.get("/api/v1/health", (req, res) => {
+app.get("/pm/health", (req, res) => {
   res.json({ status: "ok", service: "pm-backend", timestamp: new Date().toISOString() });
 });
 
-// Mount PM routes
-app.use("/api/v1/pm/inquiry", pmInquiryRouter);
-app.use("/api/v1/pm/plans", pmPlanRouter);
-app.use("/api/v1/pm/engagement", pmEngagementRouter);
-app.use("/api/v1/pm/scoring-config", pmScoringConfigRouter);
-app.use("/api/v1/pm/stories", pmStoryRouter);
-app.use("/api/v1/pm/mailerlite", pmMailerliteRouter);
-app.use("/api/v1/pm/email-templates", pmEmailTemplateRouter);
-app.use("/api/v1/pm/email-automations", pmEmailAutomationRouter);
-app.use("/api/v1/pm/track", pmEmailTrackingRouter);
-app.use("/api/v1/pm/api-integrations", pmApiIntegrationsRouter);
-app.use("/api/v1/pm/api-plugins", pmApiPluginRouter);
-app.use("/api/v1/pm/whatsapp-templates", pmWhatsappTemplateRouter);
-app.use("/api/v1/pm/whatsapp-automations", pmWhatsappAutomationRouter);
-app.use("/api/v1/pm/whatsapp-tracking", pmWhatsappTrackingRouter);
-app.use("/api/v1/pm/whatsapp-webhook", pmWhatsappWebhookRouter);
+// Mount PM routes (matches frontend paths: /pm/*)
+app.use("/pm/inquiry", pmInquiryRouter);
+app.use("/pm/plans", pmPlanRouter);
+app.use("/pm/engagement", pmEngagementRouter);
+app.use("/pm/scoring-config", pmScoringConfigRouter);
+app.use("/pm/stories", pmStoryRouter);
+app.use("/pm/mailerlite", pmMailerliteRouter);
+app.use("/pm/email-templates", pmEmailTemplateRouter);
+app.use("/pm/email-automations", pmEmailAutomationRouter);
+app.use("/pm/track", pmEmailTrackingRouter);
+app.use("/pm/api-integrations", pmApiIntegrationsRouter);
+app.use("/pm/api-plugins", pmApiPluginRouter);
+app.use("/pm/whatsapp-templates", pmWhatsappTemplateRouter);
+app.use("/pm/whatsapp-automations", pmWhatsappAutomationRouter);
+app.use("/pm/whatsapp-tracking", pmWhatsappTrackingRouter);
+app.use("/pm/whatsapp-webhook", pmWhatsappWebhookRouter);
 
 // Error handler
 app.use(errorHandler);

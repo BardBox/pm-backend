@@ -13,8 +13,6 @@ const connectDb = async () => {
 
   try {
     const connectionInstance = await mongoose.connect(`${process.env.MONGO_URI}/${dbName}`, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000,
       maxPoolSize: 10,
     });
