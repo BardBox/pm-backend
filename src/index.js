@@ -6,14 +6,9 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env file
+// Load .env file (optional — on Render, env vars are injected directly)
 const envPath = path.resolve(__dirname, '../.env');
-const result = dotenv.config({ path: envPath });
-
-if (result.error) {
-  console.error('Error loading .env file:', result.error);
-  process.exit(1);
-}
+dotenv.config({ path: envPath });
 
 // Import modules after dotenv
 import app from './app.js';
