@@ -23,9 +23,24 @@ import pmWhatsappWebhookRouter from "./routes/pmWhatsappWebhook.routes.js";
 const app = express();
 
 // CORS configuration
+const allowedOrigins = process.env.CORS_ORIGIN
+  ? process.env.CORS_ORIGIN.split(",").map(o => o.trim())
+  : [
+      "https://bizcivitas-performance-marketing.vercel.app",
+      "http://localhost:3000",
+      "http://localhost:3001",
+    ];
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",") : "*",
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow all for now, tighten later
+      }
+    },
     credentials: true,
   })
 );
