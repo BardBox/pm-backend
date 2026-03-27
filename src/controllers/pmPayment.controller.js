@@ -11,6 +11,12 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { sendEmailWithCredentials } from "../services/credentialsEmail.js";
 
 let razorpay;
+const getRazorpayConfigError = () => {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    return "Razorpay keys are not configured on the server";
+  }
+  return null;
+};
 const getRazorpay = () => {
   if (!razorpay) {
     razorpay = new Razorpay({
@@ -19,6 +25,15 @@ const getRazorpay = () => {
     });
   }
   return razorpay;
+};
+
+const formatRazorpayError = (err) => {
+  if (!err) return "Razorpay request failed";
+  if (typeof err === "string") return err;
+  if (err.error?.description) return err.error.description;
+  if (err.error?.reason) return err.error.reason;
+  if (err.message) return err.message;
+  return "Razorpay request failed";
 };
 
 // Fallback amount if no plan found (₹1 for testing)
@@ -75,6 +90,15 @@ const createPmOrder = asyncHandler(async (req, res) => {
 
   const transactionId = `PM-TXN-${Date.now()}-${Math.random().toString(36).substring(7)}`;
 
+  const configError = getRazorpayConfigError();
+  if (configError) {
+    throw new ApiErrors(500, configError);
+  }
+
+  if (!Number.isFinite(totalAmount) || totalAmount < 1) {
+    throw new ApiErrors(400, "Plan amount must be at least ₹1");
+  }
+
   const options = {
     amount: totalAmount * 100, // Razorpay expects paise
     currency: "INR",
@@ -91,7 +115,13 @@ const createPmOrder = asyncHandler(async (req, res) => {
     },
   };
 
-  const order = await getRazorpay().orders.create(options);
+  let order;
+  try {
+    order = await getRazorpay().orders.create(options);
+  } catch (err) {
+    const message = formatRazorpayError(err);
+    throw new ApiErrors(502, message);
+  }
 
   return res.status(200).json(
     new ApiResponses(200, {
@@ -141,6 +171,11 @@ const verifyPmPayment = asyncHandler(async (req, res) => {
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !inquiryId) {
     throw new ApiErrors(400, "Missing payment verification details");
+  }
+
+  const verifyConfigError = getRazorpayConfigError();
+  if (verifyConfigError) {
+    throw new ApiErrors(500, verifyConfigError);
   }
 
   // Verify signature
@@ -208,7 +243,13 @@ const verifyPmPayment = asyncHandler(async (req, res) => {
   });
 
   // Get actual amount from Razorpay order
-  const rzpOrder = await getRazorpay().orders.fetch(razorpay_order_id);
+  let rzpOrder;
+  try {
+    rzpOrder = await getRazorpay().orders.fetch(razorpay_order_id);
+  } catch (err) {
+    const message = formatRazorpayError(err);
+    throw new ApiErrors(502, message);
+  }
 
   // Create payment record and link to user
   const payment = await Payment.create({
