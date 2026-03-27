@@ -87,6 +87,72 @@ const updateInquiryScoreForWhatsapp = async (inquiryId, eventType) => {
 };
 
 /**
+ * Build dynamic variables string from inquiry data and template config
+ * Template message uses {{1}}, {{2}}, etc. — we replace them in order.
+ */
+const buildDynamicVars = (inquiry, template) => {
+  if (!inquiry) return "";
+
+  // Map of available placeholder values from inquiry
+  const valueMap = {
+    name: inquiry.fullName || "",
+    fullname: inquiry.fullName || "",
+    company: inquiry.companyName || "",
+    companyname: inquiry.companyName || "",
+    email: inquiry.email || "",
+    phone: inquiry.phone || "",
+    city: inquiry.city || "",
+    state: inquiry.state || "",
+  };
+
+  // If template has dvariables examples (e.g., "John, Mumbai"), use same count
+  // and try to match by position from the template message
+  const tftMessage = template.tftMessage || "";
+  const varCount = (tftMessage.match(/\{\{\d+\}\}/g) || []).length;
+
+  if (varCount === 0) return "";
+
+  // Try to infer variable mapping from template message context
+  const vars = [];
+  for (let i = 1; i <= varCount; i++) {
+    // Check surrounding text for hints about what {{i}} means
+    const pattern = new RegExp(`(\\w+)\\s*[:\\-]?\\s*\\{\\{${i}\\}\\}|\\{\\{${i}\\}\\}\\s*[:\\-]?\\s*(\\w+)`, "i");
+    const match = tftMessage.match(pattern);
+    const hint = (match?.[1] || match?.[2] || "").toLowerCase();
+
+    if (hint.includes("name") || (i === 1 && !hint)) {
+      vars.push(inquiry.fullName || "there");
+    } else if (hint.includes("company") || hint.includes("business")) {
+      vars.push(inquiry.companyName || "your company");
+    } else if (hint.includes("city") || hint.includes("location")) {
+      vars.push(inquiry.city || "your city");
+    } else if (hint.includes("state")) {
+      vars.push(inquiry.state || "");
+    } else if (hint.includes("email")) {
+      vars.push(inquiry.email || "");
+    } else if (hint.includes("phone") || hint.includes("mobile")) {
+      vars.push(inquiry.phone || "");
+    } else {
+      // Default: first var = name, second = company, etc.
+      const defaults = [inquiry.fullName || "there", inquiry.companyName || "", inquiry.city || "", inquiry.state || ""];
+      vars.push(defaults[i - 1] || "");
+    }
+  }
+
+  return vars.join(",");
+};
+
+const FRONTEND_URL = "https://bizcivitas-performance-marketing.vercel.app";
+
+/**
+ * Build dynamic URL suffix for CTA button (e.g., ?inquiry_id=abc123)
+ */
+const buildUrlSuffix = (inquiry) => {
+  if (!inquiry?._id) return "";
+  return `?inquiry_id=${inquiry._id}`;
+};
+
+/**
  * Send WhatsApp message via TFT API using a template
  */
 export const sendWhatsappTemplate = async (templateId, mobile, inquiryId = null) => {
@@ -101,8 +167,36 @@ export const sendWhatsappTemplate = async (templateId, mobile, inquiryId = null)
 
   const formattedMobile = formatMobile(mobile);
 
-  // Build TFT API URL (channel = WhatsApp business number to send from)
-  const url = `${TFT_API_URL}?apikey=${encodeURIComponent(TFT_API_KEY)}&channel=${encodeURIComponent(TFT_CHANNEL)}&templatename=${encodeURIComponent(template.tftTemplateName)}&mobile=${formattedMobile}`;
+  // Look up inquiry for dynamic variables
+  let inquiry = null;
+  if (inquiryId) {
+    inquiry = await PmInquiry.findById(inquiryId);
+  }
+  if (!inquiry && mobile) {
+    const cleanMobile = mobile.replace(/\D/g, "").slice(-10);
+    inquiry = await PmInquiry.findOne({
+      phone: { $regex: cleanMobile },
+    }).sort({ createdAt: -1 });
+  }
+
+  // Build dynamic variables from inquiry data
+  const dvariables = buildDynamicVars(inquiry, template);
+
+  // Build dynamic URL suffix for CTA button
+  const urlSuffix = buildUrlSuffix(inquiry);
+
+  // Build TFT API URL
+  let url = `${TFT_API_URL}?apikey=${encodeURIComponent(TFT_API_KEY)}&channel=${encodeURIComponent(TFT_CHANNEL)}&templatename=${encodeURIComponent(template.tftTemplateName)}&mobile=${formattedMobile}`;
+
+  // Append dynamic variables if present
+  if (dvariables) {
+    url += `&dvariables=${encodeURIComponent(dvariables)}`;
+  }
+
+  // Append URL suffix for dynamic CTA button link
+  if (urlSuffix && template.tftLink) {
+    url += `&urlsuffix=${encodeURIComponent(urlSuffix)}`;
+  }
 
   try {
     const response = await fetch(url);
