@@ -1,0 +1,5 @@
+node_modules/
+.env
+.env.local
+public/assets/images/story/*
+!public/assets/images/story/.gitkeep
