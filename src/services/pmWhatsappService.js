@@ -262,14 +262,24 @@ export const triggerWhatsappAutomation = async (type, pipelineStage, mobile, inq
     return;
   }
 
-  const automation = await PmWhatsappAutomation.findOne({
+  // Try exact stage match first, then fall back to any active automation of this type
+  let automation = await PmWhatsappAutomation.findOne({
     type,
     pipelineStage,
     isActive: true,
+    templateId: { $ne: null },
   }).populate("templateId");
 
   if (!automation || !automation.templateId) {
-    console.log(`[PM WhatsApp] No active ${type} automation for stage "${pipelineStage}"`);
+    automation = await PmWhatsappAutomation.findOne({
+      type,
+      isActive: true,
+      templateId: { $ne: null },
+    }).populate("templateId");
+  }
+
+  if (!automation || !automation.templateId) {
+    console.log(`[PM WhatsApp] No active "${type}" automation configured (stage: ${pipelineStage}) — set one up in WhatsApp admin`);
     return;
   }
 

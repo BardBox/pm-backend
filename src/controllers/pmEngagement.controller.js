@@ -32,15 +32,13 @@ const getPipelineStages = async () => {
     return [
       { key: "hot", minScore: t.hot },
       { key: "warm", minScore: t.warm },
-      { key: "cold", minScore: t.cold },
-      { key: "new", minScore: 0 },
+      { key: "cold", minScore: 0 },
     ];
   }
   return [
     { key: "hot", minScore: 51 },
     { key: "warm", minScore: 26 },
-    { key: "cold", minScore: 11 },
-    { key: "new", minScore: 0 },
+    { key: "cold", minScore: 0 },
   ];
 };
 
@@ -52,7 +50,7 @@ const getPipelineStage = async (score, isConverted) => {
   for (const stage of stages) {
     if (score >= stage.minScore) return stage.key;
   }
-  return "new";
+  return "cold";
 };
 
 // Track engagement event (before inquiry is created — uses sessionId)

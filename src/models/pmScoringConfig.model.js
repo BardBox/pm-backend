@@ -65,10 +65,9 @@ export const DEFAULT_EVENTS = [
 ];
 
 export const DEFAULT_PIPELINE_STAGES = [
-  { key: "new", label: "New", minScore: 0, color: "#3b82f6", order: 0, isSystem: true },
-  { key: "cold", label: "Cold", minScore: 11, color: "#06b6d4", order: 1, isSystem: true },
-  { key: "warm", label: "Warm", minScore: 26, color: "#f97316", order: 2, isSystem: true },
-  { key: "hot", label: "Hot", minScore: 51, color: "#ef4444", order: 3, isSystem: true },
+  { key: "cold", label: "Cold", minScore: 0, color: "#06b6d4", order: 0, isSystem: true },
+  { key: "warm", label: "Warm", minScore: 26, color: "#f97316", order: 1, isSystem: true },
+  { key: "hot", label: "Hot", minScore: 51, color: "#ef4444", order: 2, isSystem: true },
 ];
 
 export const PmScoringConfig = mongoose.model("PmScoringConfig", pmScoringConfigSchema);

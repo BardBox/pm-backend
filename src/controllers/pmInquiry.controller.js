@@ -84,11 +84,8 @@ const addPmInquiry = asyncHandler(async (req, res) => {
     state: inquiry.state || "",
   }).catch((err) => console.error("[PM Email] Welcome automation failed:", err.message));
 
-  // Trigger WhatsApp welcome automation (non-blocking)
-  if (inquiry.phone) {
-    triggerWhatsappAutomation("welcome", "new", inquiry.phone, inquiry._id)
-      .catch((err) => console.error("[PM WhatsApp] Welcome automation failed:", err.message));
-  }
+  // WhatsApp is triggered later via syncScore once the actual pipeline stage is known
+  // (new inquiries always start at "new" but score 30+ after sync → triggers warm/hot automation)
 
   return res
     .status(201)
