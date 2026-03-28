@@ -10,8 +10,9 @@ const TRACK_BASE = `${BACKEND_URL}/api/v1/pm/track`;
 const createTransporter = () =>
   nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: {
       user: process.env.CLIENT_EMAIL,
       pass: process.env.APP_PASSWORD_EMAIL,
