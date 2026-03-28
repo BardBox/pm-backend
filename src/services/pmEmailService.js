@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { PmEmailTemplate } from "../models/pmEmailTemplate.model.js";
 import { PmEmailAutomation } from "../models/pmEmailAutomation.model.js";
 import { PmEmailEvent } from "../models/pmEmailEvent.model.js";
@@ -7,17 +7,13 @@ import { PmInquiry } from "../models/pmInquiry.model.js";
 const BACKEND_URL = "https://backend.bizcivitas.com";
 const TRACK_BASE = `${BACKEND_URL}/api/v1/pm/track`;
 
-const createTransporter = () =>
-  nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    auth: {
-      user: process.env.CLIENT_EMAIL,
-      pass: process.env.APP_PASSWORD_EMAIL,
-    },
-  });
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const deliverEmail = async ({ from, to, subject, html }) => {
+  const { data, error } = await resend.emails.send({ from, to, subject, html });
+  if (error) throw new Error(error.message);
+  return data;
+};
 
 /**
  * Replace placeholders in content with inquiry data
@@ -149,10 +145,8 @@ export const sendPmTemplateEmail = async (templateId, recipientEmail, placeholde
   html = wrapLinksWithTracking(html, recipientEmail, templateId);
   html = injectTrackingPixel(html, recipientEmail, templateId);
 
-  const transporter = createTransporter();
-
-  const info = await transporter.sendMail({
-    from: process.env.MAILERLITE_FROM_EMAIL || process.env.CLIENT_EMAIL,
+  const info = await deliverEmail({
+    from: process.env.RESEND_FROM_EMAIL,
     to: recipientEmail,
     subject,
     html,
@@ -209,9 +203,8 @@ export const triggerAutomationEmail = async (type, pipelineStage, recipientEmail
       html = wrapLinksWithTracking(html, recipientEmail, template._id.toString());
       html = injectTrackingPixel(html, recipientEmail, template._id.toString());
 
-      const transporter = createTransporter();
-      await transporter.sendMail({
-        from: process.env.MAILERLITE_FROM_EMAIL || process.env.CLIENT_EMAIL,
+      await deliverEmail({
+        from: process.env.RESEND_FROM_EMAIL,
         to: recipientEmail,
         subject,
         html,
