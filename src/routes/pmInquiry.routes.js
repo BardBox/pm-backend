@@ -8,6 +8,7 @@ import {
   deleteMultiplePmInquiries,
   getPmInquiryStats,
   convertByEmail,
+  resetInquiryScore,
 } from "../controllers/pmInquiry.controller.js";
 import {
   handleZohoPaymentWebhook,
@@ -41,6 +42,7 @@ router.get("/", getAllPmInquiries);
 router.get("/stats", getPmInquiryStats);
 router.get("/:id", getPmInquiry);
 router.patch("/:id", updatePmInquiry);
+router.patch("/:id/reset-score", resetInquiryScore);
 router.delete("/:id", deletePmInquiry);
 router.post("/delete-multiple", deleteMultiplePmInquiries);
 

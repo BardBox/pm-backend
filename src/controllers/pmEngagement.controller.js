@@ -1,5 +1,6 @@
 import { PmInquiry } from "../models/pmInquiry.model.js";
 import { PmScoringConfig, DEFAULT_EVENTS } from "../models/pmScoringConfig.model.js";
+import { triggerWhatsappAutomation } from "../services/pmWhatsappService.js";
 import ApiErrors from "../utils/ApiErrors.js";
 import ApiResponses from "../utils/ApiResponses.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -76,6 +77,7 @@ const trackEvent = asyncHandler(async (req, res) => {
 
   if (inquiry) {
     // Update existing inquiry's score
+    const oldStage = inquiry.pipelineStage || "new";
     inquiry.engagementScore += scoreToAdd;
     inquiry.lastActivity = event;
     inquiry.activityLog.push({
@@ -91,6 +93,12 @@ const trackEvent = asyncHandler(async (req, res) => {
       // Auto-update status for cold/warm/hot — "contacted" is admin-only
       if (["cold", "warm", "hot"].includes(newStage) && inquiry.status !== "contacted") {
         inquiry.status = newStage;
+      }
+
+      // Trigger WhatsApp automation when stage changes (welcome type — first contact for this stage)
+      if (newStage !== oldStage && inquiry.phone) {
+        triggerWhatsappAutomation("welcome", newStage, inquiry.phone, inquiry._id)
+          .catch((err) => console.error("[PM WhatsApp] Auto stage-change automation failed:", err.message));
       }
     }
 
@@ -130,6 +138,7 @@ const syncScore = asyncHandler(async (req, res) => {
 
   const scoreMap = await getScoreMap();
   let totalScore = 0;
+  const oldStage = inquiry.pipelineStage || "new";
 
   for (const event of events) {
     const score = scoreMap[event.event] || 0;
@@ -151,6 +160,12 @@ const syncScore = asyncHandler(async (req, res) => {
     // Auto-update status for cold/warm/hot — "contacted" is admin-only
     if (["cold", "warm", "hot"].includes(newStage) && inquiry.status !== "contacted") {
       inquiry.status = newStage;
+    }
+
+    // Trigger WhatsApp automation when stage changes (welcome type — first contact for this stage)
+    if (newStage !== oldStage && inquiry.phone) {
+      triggerWhatsappAutomation("welcome", newStage, inquiry.phone, inquiry._id)
+        .catch((err) => console.error("[PM WhatsApp] Auto stage-change automation failed:", err.message));
     }
   }
 

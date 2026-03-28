@@ -4,12 +4,11 @@ import { PmEmailAutomation } from "../models/pmEmailAutomation.model.js";
 import { PmEmailEvent } from "../models/pmEmailEvent.model.js";
 import { PmInquiry } from "../models/pmInquiry.model.js";
 
-const BACKEND_URL = "https://backend.bizcivitas.com";
-const TRACK_BASE = `${BACKEND_URL}/api/v1/pm/track`;
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+const BACKEND_URL = process.env.PM_BACKEND_URL;
+const TRACK_BASE = `${BACKEND_URL}/pm/track`;
 
 const deliverEmail = async ({ from, to, subject, html }) => {
+  const resend = new Resend(process.env.RESEND_API_KEY);
   const { data, error } = await resend.emails.send({ from, to, subject, html });
   if (error) throw new Error(error.message);
   return data;

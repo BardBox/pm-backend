@@ -263,6 +263,31 @@ const convertByEmail = asyncHandler(async (req, res) => {
     .json(new ApiResponses(200, inquiry, "Inquiry marked as converted"));
 });
 
+// Reset engagement score for an inquiry
+const resetInquiryScore = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  const inquiry = await PmInquiry.findByIdAndUpdate(
+    id,
+    {
+      $set: {
+        engagementScore: 0,
+        activityLog: [],
+        lastActivity: null,
+      },
+    },
+    { new: true }
+  );
+
+  if (!inquiry) {
+    throw new ApiErrors(404, "Inquiry not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponses(200, inquiry, "Engagement score reset successfully"));
+});
+
 export {
   addPmInquiry,
   getAllPmInquiries,
@@ -272,4 +297,5 @@ export {
   deleteMultiplePmInquiries,
   getPmInquiryStats,
   convertByEmail,
+  resetInquiryScore,
 };

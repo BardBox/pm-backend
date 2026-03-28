@@ -3,9 +3,11 @@ import { PmWhatsappAutomation } from "../models/pmWhatsappAutomation.model.js";
 import { PmWhatsappEvent } from "../models/pmWhatsappEvent.model.js";
 import { PmInquiry } from "../models/pmInquiry.model.js";
 
-const TFT_API_URL = process.env.TFT_WHATSAPP_API_URL || "https://official.thefuturetech.in/wapp/api/v2/send/bytemplate";
-const TFT_API_KEY = process.env.TFT_WHATSAPP_API_KEY;
-const TFT_CHANNEL = process.env.TFT_WHATSAPP_CHANNEL || "919558708295";
+const getTftConfig = () => ({
+  apiUrl: process.env.TFT_WHATSAPP_API_URL || "https://official.thefuturetech.in/wapp/api/v2/send/bytemplate",
+  apiKey: process.env.TFT_WHATSAPP_API_KEY,
+  channel: process.env.TFT_WHATSAPP_CHANNEL || "919558708295",
+});
 
 /**
  * Format mobile number to 12-digit format with 91 prefix
@@ -160,6 +162,8 @@ export const sendWhatsappTemplate = async (templateId, mobile, inquiryId = null)
   if (!template || !template.isActive) {
     throw new Error("Template not found or inactive");
   }
+
+  const { apiUrl: TFT_API_URL, apiKey: TFT_API_KEY, channel: TFT_CHANNEL } = getTftConfig();
 
   if (!TFT_API_KEY) {
     throw new Error("TFT WhatsApp API key not configured");
