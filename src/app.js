@@ -19,6 +19,9 @@ import pmWhatsappTemplateRouter from "./routes/pmWhatsappTemplate.routes.js";
 import pmWhatsappAutomationRouter from "./routes/pmWhatsappAutomation.routes.js";
 import pmWhatsappTrackingRouter from "./routes/pmWhatsappTracking.routes.js";
 import pmWhatsappWebhookRouter from "./routes/pmWhatsappWebhook.routes.js";
+import pmAdminUserRouter from "./routes/pmAdminUser.routes.js";
+import pmConversationRouter from "./routes/pmConversation.routes.js";
+import pmWebhooksRouter from "./routes/pmWebhooks.routes.js";
 
 const app = express();
 
@@ -74,6 +77,9 @@ app.use("/pm/whatsapp-templates", pmWhatsappTemplateRouter);
 app.use("/pm/whatsapp-automations", pmWhatsappAutomationRouter);
 app.use("/pm/whatsapp-tracking", pmWhatsappTrackingRouter);
 app.use("/pm/whatsapp-webhook", pmWhatsappWebhookRouter);
+app.use("/pm/admin-users", pmAdminUserRouter);
+app.use("/pm/conversations", pmConversationRouter);
+app.use("/pm/webhooks", pmWebhooksRouter);
 
 // Error handler
 app.use(errorHandler);

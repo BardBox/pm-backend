@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import dns from "dns";
 import { dbName } from "../constants.js";
 
 let isConnected = false;
@@ -10,6 +11,9 @@ const connectDb = async () => {
   }
 
   console.time("MongoDB Connection");
+
+  // Use public DNS as fallback for systems with DNS issues
+  dns.setServers(["8.8.8.8", "8.8.4.4", "1.1.1.1"]);
 
   try {
     if (!process.env.MONGO_URI) {
@@ -29,8 +33,9 @@ const connectDb = async () => {
     }
 
     const connectionInstance = await mongoose.connect(connectionUri, {
-      serverSelectionTimeoutMS: 10000,
+      serverSelectionTimeoutMS: 30000,
       maxPoolSize: 10,
+      family: 4, // IPv4 only
     });
 
     isConnected = true;
