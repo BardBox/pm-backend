@@ -188,7 +188,7 @@ export const triggerAutomationEmail = async (type, pipelineStage, recipientEmail
     try {
       // Build personalized CTA link — returning users go to checkout
       const inquiry = await PmInquiry.findOne({ email: recipientEmail.toLowerCase() }).sort({ createdAt: -1 });
-      if (inquiry && type !== "welcome") {
+      if (inquiry && inquiry.status !== "converted") {
         placeholderData.ctaLink = `${FRONTEND_URL}/checkout?inquiry_id=${inquiry._id}`;
       }
 
