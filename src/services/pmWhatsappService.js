@@ -95,39 +95,48 @@ const updateInquiryScoreForWhatsapp = async (inquiryId, eventType) => {
 const buildDynamicVars = (inquiry, template) => {
   if (!inquiry) return "";
 
-  // Map of available placeholder values from inquiry
-  const valueMap = {
-    name: inquiry.fullName || "",
-    fullname: inquiry.fullName || "",
-    company: inquiry.companyName || "",
-    companyname: inquiry.companyName || "",
-    email: inquiry.email || "",
-    phone: inquiry.phone || "",
-    city: inquiry.city || "",
-    state: inquiry.state || "",
-  };
+  const checkoutUrl = inquiry.status !== "converted"
+    ? `${FRONTEND_URL}/checkout?inquiry_id=${inquiry._id}`
+    : FRONTEND_URL;
 
-  // If template has dvariables examples (e.g., "John, Mumbai"), use same count
-  // and try to match by position from the template message
+  // If template has stored example vars, use them as a blueprint:
+  // replace any URL that points to our site with the real checkout URL,
+  // replace known name placeholders with the inquiry's name.
+  if (template.tftDynamicVars) {
+    const exampleVars = template.tftDynamicVars.split(",").map((v) => v.trim());
+    const resolved = exampleVars.map((example) => {
+      if (example.includes("bizcivitas-performance-marketing") || example.includes("/checkout")) {
+        return checkoutUrl;
+      }
+      if (/^https?:\/\//i.test(example)) {
+        return example; // keep other URLs as-is
+      }
+      // Short text → treat as name placeholder
+      if (example.length < 40 && /^[a-z\s]+$/i.test(example)) {
+        return inquiry.fullName || example;
+      }
+      return example;
+    });
+    return resolved.join(",");
+  }
+
+  // Fallback: infer from message context
   const tftMessage = template.tftMessage || "";
   const varCount = (tftMessage.match(/\{\{\d+\}\}/g) || []).length;
-
   if (varCount === 0) return "";
 
-  // Try to infer variable mapping from template message context
   const vars = [];
   for (let i = 1; i <= varCount; i++) {
-    // Check surrounding text for hints about what {{i}} means
     const pattern = new RegExp(`(\\w+)\\s*[:\\-]?\\s*\\{\\{${i}\\}\\}|\\{\\{${i}\\}\\}\\s*[:\\-]?\\s*(\\w+)`, "i");
     const match = tftMessage.match(pattern);
     const hint = (match?.[1] || match?.[2] || "").toLowerCase();
 
-    if (hint.includes("name") || (i === 1 && !hint)) {
-      vars.push(inquiry.fullName || "there");
+    if (hint.includes("link") || hint.includes("url") || hint.includes("access") || hint.includes("claim")) {
+      vars.push(checkoutUrl);
     } else if (hint.includes("company") || hint.includes("business")) {
-      vars.push(inquiry.companyName || "your company");
-    } else if (hint.includes("city") || hint.includes("location")) {
-      vars.push(inquiry.city || "your city");
+      vars.push(inquiry.companyName || "");
+    } else if (hint.includes("city")) {
+      vars.push(inquiry.city || "");
     } else if (hint.includes("state")) {
       vars.push(inquiry.state || "");
     } else if (hint.includes("email")) {
@@ -135,12 +144,11 @@ const buildDynamicVars = (inquiry, template) => {
     } else if (hint.includes("phone") || hint.includes("mobile")) {
       vars.push(inquiry.phone || "");
     } else {
-      // Default: first var = name, second = company, etc.
-      const defaults = [inquiry.fullName || "there", inquiry.companyName || "", inquiry.city || "", inquiry.state || ""];
+      // Default: first=name, second=checkout URL
+      const defaults = [inquiry.fullName || "there", checkoutUrl, inquiry.companyName || "", inquiry.city || ""];
       vars.push(defaults[i - 1] || "");
     }
   }
-
   return vars.join(",");
 };
 
