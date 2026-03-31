@@ -7,7 +7,7 @@ import { PmInquiry } from "../models/pmInquiry.model.js";
 const BACKEND_URL = process.env.PM_BACKEND_URL;
 const TRACK_BASE = `${BACKEND_URL}/pm/track`;
 
-const deliverEmail = async ({ from, to, subject, html }) => {
+export const deliverEmail = async ({ from, to, subject, html }) => {
   const resend = new Resend(process.env.RESEND_API_KEY);
   const { data, error } = await resend.emails.send({ from, to, subject, html });
   if (error) throw new Error(error.message);
@@ -19,7 +19,7 @@ const deliverEmail = async ({ from, to, subject, html }) => {
  */
 const FRONTEND_URL = "https://bizcivitas-performance-marketing.vercel.app";
 
-const replacePlaceholders = (html, data) => {
+export const replacePlaceholders = (html, data) => {
   return html
     .replace(/\{\{name\}\}/gi, data.name || "")
     .replace(/\{\{email\}\}/gi, data.email || "")
@@ -33,7 +33,7 @@ const replacePlaceholders = (html, data) => {
 /**
  * Inject open tracking pixel into HTML (before </body> or at end)
  */
-const injectTrackingPixel = (html, email, templateId) => {
+export const injectTrackingPixel = (html, email, templateId) => {
   const params = new URLSearchParams({
     e: email,
     t: templateId,
@@ -76,7 +76,7 @@ const appendUtmParams = (html, type, pipelineStage, templateName, inquiryId) => 
  * Wrap all <a href="..."> links with click tracking redirect
  * Skips mailto: links and unsubscribe links
  */
-const wrapLinksWithTracking = (html, email, templateId) => {
+export const wrapLinksWithTracking = (html, email, templateId) => {
   return html.replace(
     /<a\s([^>]*?)href=["']([^"']+)["']([^>]*?)>/gi,
     (match, before, url, after) => {

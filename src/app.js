@@ -22,6 +22,7 @@ import pmWhatsappWebhookRouter from "./routes/pmWhatsappWebhook.routes.js";
 import pmAdminUserRouter from "./routes/pmAdminUser.routes.js";
 import pmConversationRouter from "./routes/pmConversation.routes.js";
 import pmWebhooksRouter from "./routes/pmWebhooks.routes.js";
+import pmGmailRouter from "./routes/pmGmail.routes.js";
 
 const app = express();
 
@@ -80,6 +81,7 @@ app.use("/pm/whatsapp-webhook", pmWhatsappWebhookRouter);
 app.use("/pm/admin-users", pmAdminUserRouter);
 app.use("/pm/conversations", pmConversationRouter);
 app.use("/pm/webhooks", pmWebhooksRouter);
+app.use("/pm/gmail", pmGmailRouter);
 
 // Error handler
 app.use(errorHandler);

@@ -13,6 +13,8 @@ dotenv.config({ path: envPath });
 // Import modules after dotenv
 import app from './app.js';
 import connectDb from './db/index.js';
+import { startBackgroundSync } from './services/backgroundSync.js';
+import { startGmailSync } from './services/gmailService.js';
 
 const PORT = process.env.PORT || 8090;
 
@@ -23,6 +25,13 @@ connectDb()
     });
     app.listen(PORT, () => {
       console.log(`PM Backend is running on port: ${PORT}`);
+      startBackgroundSync();
+      // Start Gmail sync only if credentials are configured
+      if (process.env.GMAIL_REFRESH_TOKEN) {
+        startGmailSync();
+      } else {
+        console.log('[Gmail] No GMAIL_REFRESH_TOKEN found — skipping auto-sync. Visit GET /pm/gmail/auth to connect.');
+      }
     });
   })
   .catch((error) => {

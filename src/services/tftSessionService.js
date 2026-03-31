@@ -4,11 +4,12 @@
  * with the TFT WhatsApp platform via reverse-engineered internal APIs.
  */
 
-const TFT_BASE_URL = process.env.TFT_BASE_URL || "https://official.thefuturetech.in";
-const TFT_EMAIL = process.env.TFT_EMAIL || "";
-const TFT_PASSWORD = process.env.TFT_PASSWORD || "";
-const TFT_API_KEY = process.env.TFT_WHATSAPP_API_KEY || "";
-const TFT_CHANNEL = process.env.TFT_WHATSAPP_CHANNEL || "919558708295";
+// Read lazily at call-time so dotenv has a chance to load first (ESM hoisting issue)
+const TFT_BASE_URL = () => process.env.TFT_BASE_URL || "https://official.thefuturetech.in";
+const TFT_EMAIL = () => process.env.TFT_EMAIL || "";
+const TFT_PASSWORD = () => process.env.TFT_PASSWORD || "";
+const TFT_API_KEY = () => process.env.TFT_WHATSAPP_API_KEY || "";
+const TFT_CHANNEL = () => process.env.TFT_WHATSAPP_CHANNEL || "919558708295";
 
 // In-memory session store
 let sessionCookies = "";
@@ -29,7 +30,7 @@ const extractCookies = (res) => {
   return cookies;
 };
 
-const getBaseUrl = () => activeBaseUrl || TFT_BASE_URL;
+const getBaseUrl = () => activeBaseUrl || TFT_BASE_URL();
 
 const mergeCookies = (cookieMap, cookiePairs) => {
   for (const pair of cookiePairs) {
@@ -94,7 +95,7 @@ const loginWithBase = async (baseUrl) => {
     await requestWithCookies(`${baseUrl}/login`, { method: "GET", headers: baseHeaders }, cookieMap);
   } catch { /* ignore */ }
 
-  const formBody = `username=${encodeURIComponent(TFT_EMAIL)}&password=${encodeURIComponent(TFT_PASSWORD)}`;
+  const formBody = `username=${encodeURIComponent(TFT_EMAIL())}&password=${encodeURIComponent(TFT_PASSWORD())}`;
   let res = await requestWithCookies(
     `${baseUrl}/login`,
     {
@@ -142,11 +143,11 @@ const loginWithBase = async (baseUrl) => {
 };
 
 const login = async () => {
-  if (!TFT_EMAIL || !TFT_PASSWORD) {
+  if (!TFT_EMAIL() || !TFT_PASSWORD()) {
     throw new Error("TFT_EMAIL and TFT_PASSWORD env vars are required for TFT session");
   }
 
-  const primaryBase = TFT_BASE_URL;
+  const primaryBase = TFT_BASE_URL();
   const altBase = primaryBase.startsWith("https://")
     ? primaryBase.replace("https://", "http://")
     : primaryBase.replace("http://", "https://");
@@ -217,10 +218,10 @@ const tftRequest = async (path, options = {}) => {
 };
 
 export const fetchTftTemplateList = async () => {
-  if (!TFT_API_KEY) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+  if (!TFT_API_KEY()) throw new Error("TFT_WHATSAPP_API_KEY not configured");
 
   const res = await fetch(
-    `${getBaseUrl()}/wapp/api/offwatemp/list?apikey=${encodeURIComponent(TFT_API_KEY)}`
+    `${getBaseUrl()}/wapp/api/offwatemp/list?apikey=${encodeURIComponent(TFT_API_KEY())}`
   );
 
   if (!res.ok) {
@@ -233,10 +234,10 @@ export const fetchTftTemplateList = async () => {
 };
 
 export const fetchTftTemplateDetails = async (templateName) => {
-  if (!TFT_API_KEY) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+  if (!TFT_API_KEY()) throw new Error("TFT_WHATSAPP_API_KEY not configured");
 
   const res = await fetch(
-    `${getBaseUrl()}/wapp/api/get/offwatemp/info?apikey=${encodeURIComponent(TFT_API_KEY)}&templatename=${encodeURIComponent(templateName)}`
+    `${getBaseUrl()}/wapp/api/get/offwatemp/info?apikey=${encodeURIComponent(TFT_API_KEY())}&templatename=${encodeURIComponent(templateName)}`
   );
 
   if (!res.ok) {
@@ -254,7 +255,7 @@ export const createTftTemplate = async (params) => {
   formData.append("templatename", params.templatename);
   formData.append("temptype", params.temptype || "standard");
   formData.append("msg", params.msg || "");
-  formData.append("offch", params.offch || TFT_CHANNEL);
+  formData.append("offch", params.offch || TFT_CHANNEL());
   formData.append("media", params.media || "");
   formData.append("lang", params.lang || "en");
   formData.append("category", params.category || "MARKETING");
@@ -321,7 +322,7 @@ export const deleteTftTemplate = async (systemId) => {
 };
 
 export const getTftChannels = async () => {
-  if (!TFT_API_KEY) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+  if (!TFT_API_KEY()) throw new Error("TFT_WHATSAPP_API_KEY not configured");
 
   const cookies = await getSession();
   const res = await fetch(`${getBaseUrl()}/api/v1/get/offwa/channellist/select`, {
@@ -333,10 +334,10 @@ export const getTftChannels = async () => {
 };
 
 export const getTftReportByTemplate = async (templateName) => {
-  if (!TFT_API_KEY) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+  if (!TFT_API_KEY()) throw new Error("TFT_WHATSAPP_API_KEY not configured");
 
   const res = await fetch(
-    `${getBaseUrl()}/wapp/api/report/bycampaign?apikey=${encodeURIComponent(TFT_API_KEY)}&tempname=${encodeURIComponent(templateName)}`
+    `${getBaseUrl()}/wapp/api/report/bycampaign?apikey=${encodeURIComponent(TFT_API_KEY())}&tempname=${encodeURIComponent(templateName)}`
   );
 
   if (!res.ok) {
@@ -347,10 +348,10 @@ export const getTftReportByTemplate = async (templateName) => {
 };
 
 export const getTftReportByDate = async (startDate, endDate) => {
-  if (!TFT_API_KEY) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+  if (!TFT_API_KEY()) throw new Error("TFT_WHATSAPP_API_KEY not configured");
 
   const res = await fetch(
-    `${getBaseUrl()}/wapp/api/report/bydate?apikey=${encodeURIComponent(TFT_API_KEY)}&startDate=${startDate}&endDate=${endDate}`
+    `${getBaseUrl()}/wapp/api/report/bydate?apikey=${encodeURIComponent(TFT_API_KEY())}&startDate=${startDate}&endDate=${endDate}`
   );
 
   if (!res.ok) {
@@ -361,10 +362,10 @@ export const getTftReportByDate = async (startDate, endDate) => {
 };
 
 export const getTftReportByNumber = async (mobile) => {
-  if (!TFT_API_KEY) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+  if (!TFT_API_KEY()) throw new Error("TFT_WHATSAPP_API_KEY not configured");
 
   const res = await fetch(
-    `${getBaseUrl()}/wapp/api/report/bynumber?apikey=${encodeURIComponent(TFT_API_KEY)}&mobile=${encodeURIComponent(mobile)}`
+    `${getBaseUrl()}/wapp/api/report/bynumber?apikey=${encodeURIComponent(TFT_API_KEY())}&mobile=${encodeURIComponent(mobile)}`
   );
 
   if (!res.ok) {
@@ -374,11 +375,64 @@ export const getTftReportByNumber = async (mobile) => {
   return res.json();
 };
 
-export const getTftSummaryReport = async () => {
-  if (!TFT_API_KEY) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+/**
+ * Send a free-text (or template) WhatsApp message via TFT chatbot session
+ * Uses the internal chatbot API — supports free text unlike the public template API
+ */
+export const sendChatbotMsg = async ({ mobile, message, chno, tempid = "", imgs = [], video = "", pdf = "" }) => {
+  const cookies = await getSession();
+
+  const formData = new URLSearchParams();
+  formData.append("mobile", mobile);
+  formData.append("message", message || ".");
+  formData.append("chno", chno || TFT_CHANNEL());
+  formData.append("tempid", tempid);
+  formData.append("name", "");
+  formData.append("video", video);
+  formData.append("pdf", pdf);
+  imgs.forEach(img => formData.append("imgs", img));
+
+  const res = await fetch(`${getBaseUrl()}/api/v1/sendchatbot/msg`, {
+    method: "POST",
+    headers: {
+      Cookie: cookies,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: formData.toString(),
+  });
+
+  const text = await res.text().catch(() => "");
+  return { ok: res.ok, status: res.status, body: text };
+};
+
+/**
+ * Fetch full chat history for a mobile number from TFT
+ * Returns array of message objects (both sent and received)
+ */
+export const fetchChatHistory = async (mobile, chno) => {
+  const cookies = await getSession();
+  const channel = chno || TFT_CHANNEL();
 
   const res = await fetch(
-    `${getBaseUrl()}/wapp/api/wacamp/report/summary?apikey=${encodeURIComponent(TFT_API_KEY)}`
+    `${getBaseUrl()}/api/v2/find/chatlist?number=${encodeURIComponent(mobile)}&chno=${encodeURIComponent(channel)}`,
+    {
+      headers: { Cookie: cookies },
+    }
+  );
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    throw new Error(`TFT fetchChatHistory failed (${res.status}): ${body}`);
+  }
+
+  return res.json();
+};
+
+export const getTftSummaryReport = async () => {
+  if (!TFT_API_KEY()) throw new Error("TFT_WHATSAPP_API_KEY not configured");
+
+  const res = await fetch(
+    `${getBaseUrl()}/wapp/api/wacamp/report/summary?apikey=${encodeURIComponent(TFT_API_KEY())}`
   );
 
   if (!res.ok) {

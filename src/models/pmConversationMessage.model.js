@@ -34,10 +34,14 @@ const pmConversationMessageSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["sent", "delivered", "read", "failed", "pending"],
+      enum: ["sent", "delivered", "read", "failed", "pending", "received"],
       default: "sent",
     },
     linkedEventId: mongoose.Schema.Types.ObjectId,
+    metadata: {
+      type: mongoose.Schema.Types.Mixed,
+      default: null,
+    },
     messageTimestamp: {
       type: Date,
       default: Date.now,
@@ -51,6 +55,7 @@ const pmConversationMessageSchema = new Schema(
 
 pmConversationMessageSchema.index({ inquiryId: 1, messageTimestamp: -1 });
 pmConversationMessageSchema.index({ sender: 1 });
+pmConversationMessageSchema.index({ "metadata.tftMsgId": 1 }, { sparse: true });
 
 export const PmConversationMessage = mongoose.model(
   "PmConversationMessage",

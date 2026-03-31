@@ -21,7 +21,7 @@ export const initiateGmailAuth = async (req, res) => {
  */
 export const gmailCallback = async (req, res) => {
   try {
-    const { code } = req.body;
+    const code = req.query.code || req.body.code;
 
     if (!code) {
       return res.status(400).json({ error: "Missing authorization code" });
