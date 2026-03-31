@@ -14,6 +14,8 @@ const DEFAULT_PERMISSIONS = () => ({
   whatsapp: "none",
   templates: "none",
   api: "none",
+  landing_pages: "none",
+  forms: "none",
 });
 
 const pmAdminUserSchema = new Schema(

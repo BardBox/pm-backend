@@ -1,7 +1,11 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import path from "path";
+import { fileURLToPath } from "url";
 import { errorHandler } from "./middlewares/errorHandler.middleware.js";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Import PM routes
 import pmInquiryRouter from "./routes/pmInquiry.routes.js";
@@ -23,6 +27,8 @@ import pmAdminUserRouter from "./routes/pmAdminUser.routes.js";
 import pmConversationRouter from "./routes/pmConversation.routes.js";
 import pmWebhooksRouter from "./routes/pmWebhooks.routes.js";
 import pmGmailRouter from "./routes/pmGmail.routes.js";
+import pmLandingPageRouter from "./routes/pmLandingPage.routes.js";
+import pmFormRouter from "./routes/pmForm.routes.js";
 
 const app = express();
 
@@ -54,8 +60,11 @@ app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true, limit: "50mb" }));
 app.use(cookieParser());
 
-// Static files
-app.use(express.static("public"));
+// Static files (absolute paths so they work regardless of CWD)
+const PUBLIC_DIR = path.resolve(__dirname, "../public");
+app.use(express.static(PUBLIC_DIR));
+// Serve uploaded/GitHub landing page static files
+app.use("/lp-static", express.static(path.join(PUBLIC_DIR, "lp")));
 
 // Health check
 app.get("/pm/health", (req, res) => {
@@ -82,6 +91,8 @@ app.use("/pm/admin-users", pmAdminUserRouter);
 app.use("/pm/conversations", pmConversationRouter);
 app.use("/pm/webhooks", pmWebhooksRouter);
 app.use("/pm/gmail", pmGmailRouter);
+app.use("/pm/landing-pages", pmLandingPageRouter);
+app.use("/pm/forms", pmFormRouter);
 
 // Error handler
 app.use(errorHandler);
