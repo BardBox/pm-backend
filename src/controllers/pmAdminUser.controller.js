@@ -46,7 +46,7 @@ export const listAdminUsers = async (req, res) => {
 // POST /pm/admin-users
 export const createAdminUser = async (req, res) => {
   try {
-    const { name, email, password, permissions, isActive } = req.body;
+    const { name, email, password, permissions, isActive, dashboardWidgets } = req.body;
     if (!name || !email || !password) {
       return res.status(400).json({ success: false, message: "Name, email, and password are required" });
     }
@@ -56,7 +56,7 @@ export const createAdminUser = async (req, res) => {
       return res.status(409).json({ success: false, message: "A user with this email already exists" });
     }
 
-    const user = await PmAdminUser.create({ name, email, password, permissions, isActive });
+    const user = await PmAdminUser.create({ name, email, password, permissions, isActive, dashboardWidgets });
     const { password: _, ...userData } = user.toObject();
     return res.status(201).json({ success: true, data: userData });
   } catch (err) {
@@ -93,6 +93,7 @@ export const updateAdminUser = async (req, res) => {
     if (permissions !== undefined) user.permissions = permissions;
     if (dashboardWidgets !== undefined) user.dashboardWidgets = dashboardWidgets;
     if (password && password.trim() !== "") user.password = password; // pre-save hook will hash
+    if (dashboardWidgets !== undefined) user.dashboardWidgets = dashboardWidgets;
 
     await user.save();
 
