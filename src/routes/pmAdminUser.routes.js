@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   authAdminUser,
   listAdminUsers,
+  getAdminUser,
   createAdminUser,
   updateAdminUser,
   deleteAdminUser,
@@ -16,6 +17,7 @@ router.post("/auth", authAdminUser);
 // Note: Authorization checks should be done via JWT verification in middleware
 // For now, these are accessible to authenticated requests
 router.get("/", listAdminUsers);
+router.get("/:id", getAdminUser);
 router.post("/", createAdminUser);
 router.patch("/:id", updateAdminUser);
 router.delete("/:id", deleteAdminUser);

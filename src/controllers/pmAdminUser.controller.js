@@ -25,6 +25,7 @@ export const authAdminUser = async (req, res) => {
         name: user.name,
         email: user.email,
         permissions: user.permissions,
+        dashboardWidgets: user.dashboardWidgets ?? null,
       },
     });
   } catch (err) {
@@ -63,11 +64,24 @@ export const createAdminUser = async (req, res) => {
   }
 };
 
+// GET /pm/admin-users/:id
+export const getAdminUser = async (req, res) => {
+  try {
+    const user = await PmAdminUser.findById(req.params.id, "-password");
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+    return res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
 // PATCH /pm/admin-users/:id
 export const updateAdminUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, password, isActive, permissions } = req.body;
+    const { name, password, isActive, permissions, dashboardWidgets } = req.body;
 
     const user = await PmAdminUser.findById(id);
     if (!user) {
@@ -77,6 +91,7 @@ export const updateAdminUser = async (req, res) => {
     if (name !== undefined) user.name = name;
     if (isActive !== undefined) user.isActive = isActive;
     if (permissions !== undefined) user.permissions = permissions;
+    if (dashboardWidgets !== undefined) user.dashboardWidgets = dashboardWidgets;
     if (password && password.trim() !== "") user.password = password; // pre-save hook will hash
 
     await user.save();

@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 const DEFAULT_PERMISSIONS = () => ({
   dashboard: "none",
   inquiries: "none",
+  conversations: "none",
   plans: "none",
   members: "none",
   stories: "none",
@@ -30,6 +31,10 @@ const pmAdminUserSchema = new Schema(
     permissions: {
       type: Object,
       default: DEFAULT_PERMISSIONS,
+    },
+    dashboardWidgets: {
+      type: Object,
+      default: null,
     },
   },
   { timestamps: true }
