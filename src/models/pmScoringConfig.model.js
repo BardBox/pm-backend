@@ -59,7 +59,7 @@ export const DEFAULT_EVENTS = [
   { key: "file_download", label: "File Download", description: "User downloads a file/brochure", score: 10, icon: "FileDown", isSystem: true },
   { key: "pricing_visit", label: "Pricing Page", description: "User visits pricing/checkout page", score: 15, icon: "CreditCard", isSystem: true },
   { key: "multiple_pages", label: "5+ Pages Visited", description: "User visits more than 5 pages", score: 10, icon: "ArrowLeftRight", isSystem: true },
-  { key: "whatsapp_sent", label: "WhatsApp Sent", description: "WhatsApp message sent to lead", score: 3, icon: "MessageCircle", isSystem: true },
+  { key: "whatsapp_sent", label: "WhatsApp Sent", description: "WhatsApp message sent to lead", score: 0, icon: "MessageCircle", isSystem: true },
   { key: "whatsapp_delivered", label: "WhatsApp Delivered", description: "WhatsApp message delivered to lead", score: 2, icon: "MessageCircle", isSystem: true },
   { key: "whatsapp_read", label: "WhatsApp Read", description: "WhatsApp message read by lead", score: 5, icon: "MessageCircle", isSystem: true },
 ];

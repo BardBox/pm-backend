@@ -66,8 +66,9 @@ const updateInquiryScoreForWhatsapp = async (inquiryId, eventType) => {
     if (!inquiry) return;
 
     // Score mapping for WhatsApp events
+    // "sent" is 0 — sending a message is an admin action, not a lead engagement signal
     const scoreMap = {
-      sent: 3,
+      sent: 0,
       delivered: 2,
       read: 5,
     };
