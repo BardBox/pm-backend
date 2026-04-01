@@ -26,6 +26,10 @@ const pmWhatsappEventSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    messageId: {
+      type: String,
+      default: null,
+    },
     metadata: {
       type: Schema.Types.Mixed,
     },
@@ -39,5 +43,7 @@ const pmWhatsappEventSchema = new Schema(
 pmWhatsappEventSchema.index({ mobile: 1, eventType: 1 });
 pmWhatsappEventSchema.index({ inquiryId: 1 });
 pmWhatsappEventSchema.index({ eventTimestamp: -1 });
+// Unique sparse index on messageId — enforces atomic deduplication at DB level
+pmWhatsappEventSchema.index({ messageId: 1 }, { unique: true, sparse: true });
 
 export const PmWhatsappEvent = mongoose.model("PmWhatsappEvent", pmWhatsappEventSchema);

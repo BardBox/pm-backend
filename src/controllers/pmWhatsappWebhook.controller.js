@@ -67,39 +67,33 @@ const handleWebhook = async (req, res) => {
 
     // Clean mobile number for lookup
     const cleanMobile = mobile.replace(/[\s\-\+\(\)]/g, "");
-
-    // Deduplicate: only one event per mobile+type per 5 minutes
-    const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
-    const existing = await PmWhatsappEvent.findOne({
-      mobile: { $regex: cleanMobile.slice(-10) },
-      eventType,
-      eventTimestamp: { $gte: fiveMinAgo },
-    });
-
-    if (existing) {
-      console.log(`[PM WhatsApp Webhook] Duplicate ${eventType} for ${cleanMobile}, skipping`);
-      return res.status(200).json({ received: true, deduplicated: true });
-    }
-
-    // Find inquiry by phone number (last 10 digits)
     const last10 = cleanMobile.slice(-10);
-    const inquiry = await PmInquiry.findOne({
-      phone: { $regex: last10 },
-    }).sort({ createdAt: -1 });
 
-    // Create event
-    await PmWhatsappEvent.create({
-      mobile: cleanMobile,
-      eventType,
-      templateName,
-      inquiryId: inquiry?._id || null,
-      eventTimestamp: new Date(timestamp),
-      metadata: {
-        source: "tft_webhook",
-        messageId,
-        rawPayload: payload,
-      },
-    });
+    // Find inquiry by phone number (last 10 digits, exact match on stored value)
+    const inquiry = await PmInquiry.findOne({ phone: { $regex: last10 } }).sort({ createdAt: -1 });
+
+    // Create event — unique index on messageId handles atomic deduplication
+    // If TFT sends duplicate webhooks for same messageId, DB throws 11000 and we skip
+    try {
+      await PmWhatsappEvent.create({
+        mobile: cleanMobile,
+        eventType,
+        templateName,
+        messageId: messageId || null,
+        inquiryId: inquiry?._id || null,
+        eventTimestamp: new Date(timestamp),
+        metadata: {
+          source: "tft_webhook",
+          rawPayload: payload,
+        },
+      });
+    } catch (err) {
+      if (err.code === 11000) {
+        console.log(`[PM WhatsApp Webhook] Duplicate messageId "${messageId}", skipping`);
+        return res.status(200).json({ received: true, deduplicated: true });
+      }
+      throw err;
+    }
 
     // Update engagement score
     if (inquiry && (eventType === "delivered" || eventType === "read")) {

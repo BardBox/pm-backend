@@ -9,6 +9,7 @@ import ApiErrors from "../utils/ApiErrors.js";
 import ApiResponses from "../utils/ApiResponses.js";
 import asyncHandler from "../utils/asyncHandler.js";
 import { sendEmailWithCredentials } from "../services/credentialsEmail.js";
+import { syncMemberToMainBackend } from "../services/bizcivitasInternalService.js";
 
 let razorpay;
 const getRazorpayConfigError = () => {
@@ -268,13 +269,34 @@ const verifyPmPayment = asyncHandler(async (req, res) => {
   user.paymentVerification.push(payment._id);
   await user.save();
 
-  // Send welcome email with credentials
+  // Send welcome email with credentials (pm-backend copy)
   try {
     await sendEmailWithCredentials(fname, user.email, password);
     console.log(`✅ PM credentials email sent to ${user.email}`);
   } catch (err) {
     console.error("Failed to send PM credentials email:", err.message);
     // Don't throw - user is already created, email failure shouldn't block response
+  }
+
+  // Sync member to main bizcivitas-backend so they can log in on mobile app
+  try {
+    await syncMemberToMainBackend({
+      fname,
+      lname,
+      email: inquiry.email,
+      mobile: inquiry.phone || undefined,
+      state: inquiry.state || "",
+      city: inquiry.city || "",
+      password,
+      razorpayPaymentId: razorpay_payment_id,
+      razorpayOrderId: razorpay_order_id,
+      razorpaySignature: razorpay_signature,
+      amount: rzpOrder.amount,
+    });
+    console.log(`✅ PM member synced to main backend: ${user.email}`);
+  } catch (err) {
+    console.error(`⚠️ Failed to sync PM member to main backend: ${err.message}`);
+    // Don't throw — payment is complete, pm-backend user exists; sync can be retried manually
   }
 
   // Update inquiry status to converted with payment details

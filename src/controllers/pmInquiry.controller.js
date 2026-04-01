@@ -2,6 +2,7 @@ import { PmInquiry } from "../models/pmInquiry.model.js";
 import { createSubscriber } from "../services/mailerliteService.js";
 import { triggerAutomationEmail } from "../services/pmEmailService.js";
 import { triggerWhatsappAutomation } from "../services/pmWhatsappService.js";
+import { checkExistingMember } from "../services/bizcivitasInternalService.js";
 import ApiErrors from "../utils/ApiErrors.js";
 import ApiResponses from "../utils/ApiResponses.js";
 import asyncHandler from "../utils/asyncHandler.js";
@@ -40,6 +41,18 @@ const addPmInquiry = asyncHandler(async (req, res) => {
   const cleanedPhone = phone.trim().replace(/[\s\-\+\(\)]/g, "");
   if (!/^(91|0)?\d{10}$/.test(cleanedPhone)) {
     throw new ApiErrors(400, "Please provide a valid 10-digit Indian mobile number");
+  }
+
+  // Check if person is already a BizCivitas member in the main backend (by email OR phone)
+  const memberCheck = await checkExistingMember(email.trim(), phone.trim());
+  if (memberCheck.isMember) {
+    return res.status(409).json(
+      new ApiResponses(409, {
+        alreadyMember: true,
+        membershipType: memberCheck.membershipType,
+        name: memberCheck.name,
+      }, "You are already a BizCivitas member! Please log in to your account.")
+    );
   }
 
   const inquiry = await PmInquiry.create({

@@ -57,6 +57,8 @@ const logWhatsappEvent = async (mobile, eventType, templateId, templateName, inq
 
 /**
  * Update inquiry engagement score for WhatsApp events
+ * "delivered" and "read" are counted only ONCE per inquiry — no matter how many
+ * times TFT fires the webhook for the same event type.
  */
 const updateInquiryScoreForWhatsapp = async (inquiryId, eventType) => {
   if (!inquiryId) return;
@@ -66,7 +68,6 @@ const updateInquiryScoreForWhatsapp = async (inquiryId, eventType) => {
     if (!inquiry) return;
 
     // Score mapping for WhatsApp events
-    // "sent" is 0 — sending a message is an admin action, not a lead engagement signal
     const scoreMap = {
       sent: 0,
       delivered: 2,
@@ -74,16 +75,24 @@ const updateInquiryScoreForWhatsapp = async (inquiryId, eventType) => {
     };
 
     const scoreToAdd = scoreMap[eventType] || 0;
-    if (scoreToAdd > 0) {
-      inquiry.engagementScore = Math.max(0, inquiry.engagementScore + scoreToAdd);
-      inquiry.lastActivity = `whatsapp_${eventType}`;
-      inquiry.activityLog.push({
-        event: `whatsapp_${eventType}`,
-        scoreAdded: scoreToAdd,
-        timestamp: new Date(),
-      });
-      await inquiry.save();
+    if (scoreToAdd <= 0) return;
+
+    // Only count each event type ONCE per inquiry
+    const eventKey = `whatsapp_${eventType}`;
+    const alreadyCounted = inquiry.activityLog?.some((log) => log.event === eventKey);
+    if (alreadyCounted) {
+      console.log(`[PM WhatsApp] "${eventKey}" already counted for inquiry ${inquiryId}, skipping`);
+      return;
     }
+
+    inquiry.engagementScore = Math.max(0, inquiry.engagementScore + scoreToAdd);
+    inquiry.lastActivity = eventKey;
+    inquiry.activityLog.push({
+      event: eventKey,
+      scoreAdded: scoreToAdd,
+      timestamp: new Date(),
+    });
+    await inquiry.save();
   } catch (err) {
     console.error("[PM WhatsApp] Failed to update inquiry score:", err.message);
   }
