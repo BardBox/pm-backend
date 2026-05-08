@@ -253,6 +253,7 @@ const verifyPmPayment = asyncHandler(async (req, res) => {
   }
 
   // Create payment record and link to user
+  // rzpOrder.amount is in paise — divide by 100 to store in rupees
   const payment = await Payment.create({
     userId: user._id,
     membershipType: "Digital Membership",
@@ -261,7 +262,7 @@ const verifyPmPayment = asyncHandler(async (req, res) => {
     razorpayPaymentId: razorpay_payment_id,
     razorpaySignature: razorpay_signature,
     status: "completed",
-    amount: rzpOrder.amount,
+    amount: rzpOrder.amount / 100,
     paymentMethod: "razorpay",
   });
 
@@ -291,7 +292,7 @@ const verifyPmPayment = asyncHandler(async (req, res) => {
       razorpayPaymentId: razorpay_payment_id,
       razorpayOrderId: razorpay_order_id,
       razorpaySignature: razorpay_signature,
-      amount: rzpOrder.amount,
+      amount: rzpOrder.amount / 100, // Convert paise → rupees for main backend
     });
     console.log(`✅ PM member synced to main backend: ${user.email}`);
   } catch (err) {
